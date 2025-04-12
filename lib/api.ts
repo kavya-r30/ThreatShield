@@ -35,7 +35,9 @@ export async function uploadFileForAnalysis(file: File, fileType: FileType): Pro
     const result = await response.json()
     console.log("API Response:", result)
 
-    // Return the result directly without generating an ID or saving to history
+    // Save the result to history
+    saveToHistory(result, fileType)
+
     return result
   } catch (error) {
     console.error("Error uploading file:", error)
@@ -50,19 +52,161 @@ export async function uploadFileForAnalysis(file: File, fileType: FileType): Pro
  * and fetch it using an ID
  */
 export async function fetchAnalysisResult(
-  result: any,
+  id: string,
   fileType: string,
 ): Promise<PEAnalysisResult | GeneralAnalysisResult> {
-  // For PE files, return the result directly
-  if (fileType === FileType.PE) {
-    return {
-      filename: result.filename,
-      analysis_data: result.analysis_data,
-    } as PEAnalysisResult
+  try {
+    const response = await fetch(`${API_BASE_URL}/results/${fileType}/${id}`)
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+    return await response.json()
+  } catch (error) {
+    console.error("Error fetching analysis result:", error)
+    throw error
   }
+}
 
-  // For other file types, return the result directly
-  return result as GeneralAnalysisResult
+/**
+ * Saves analysis result to local storage history
+ */
+function saveToHistory(result: any, fileType: FileType): void {
+  try {
+    // Get existing history or initialize empty array
+    const historyString = localStorage.getItem("scanHistory")
+    const history = historyString ? JSON.parse(historyString) : []
+
+    // Create history item
+    const historyItem = {
+      id: result.id || `scan-${Date.now()}`,
+      fileName: result.filename || "Unknown file",
+      fileType: fileType,
+      scanDate: new Date().toISOString(),
+      result: result.analysis_data?.summary?.prediction || "unknown",
+      riskScore: result.analysis_data?.risk_metrics?.risk_score || 0,
+      threatCount: result.analysis_data?.risk_metrics?.total_suspicious_features || 0,
+    }
+
+    // Add to beginning of array
+    history.unshift(historyItem)
+
+    // Keep only the last 25 items
+    const trimmedHistory = history.slice(0, 25)
+
+    // Save back to localStorage
+    localStorage.setItem("scanHistory", JSON.stringify(trimmedHistory))
+  } catch (error) {
+    console.error("Error saving to history:", error)
+  }
+}
+
+/**
+ * Fetches scan history from local storage
+ */
+export function fetchScanHistory(): Promise<any[]> {
+  return new Promise((resolve) => {
+    try {
+      const historyString = localStorage.getItem("scanHistory")
+      const history = historyString ? JSON.parse(historyString) : []
+      resolve(history)
+    } catch (error) {
+      console.error("Error fetching scan history:", error)
+      resolve([])
+    }
+  })
+}
+
+/**
+ * Clears scan history from local storage
+ */
+export function clearScanHistory(): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      localStorage.removeItem("scanHistory")
+      resolve()
+    } catch (error) {
+      console.error("Error clearing scan history:", error)
+      resolve()
+    }
+  })
+}
+
+/**
+ * Asks the AI assistant a question
+ */
+export async function askAI(question: string): Promise<string> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat/ask`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ question }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.response
+  } catch (error) {
+    console.error("Error asking AI:", error)
+    throw error
+  }
+}
+
+/**
+ * Analyzes a JSON report using the AI assistant
+ */
+export async function analyzeReportWithAI(reportData: any): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat/analyze`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(reportData),
+    })
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error("Error analyzing report with AI:", error)
+    throw error
+  }
+}
+
+/**
+ * Generates a chat response from the AI
+ */
+export async function generateChatResponse(message: string, file?: File | null): Promise<string> {
+  try {
+    const formData = new FormData()
+    formData.append("message", message)
+
+    if (file) {
+      formData.append("file", file)
+    }
+
+    const response = await fetch(`${API_BASE_URL}/chat`, {
+      method: "POST",
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.response
+  } catch (error) {
+    console.error("Error generating chat response:", error)
+    throw error
+  }
 }
 
 /**

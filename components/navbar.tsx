@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ShieldAlert, Menu, BarChart2, History, Upload, Settings } from "lucide-react"
+import { ShieldAlert, Menu, BarChart2, History, Upload, Settings, MessageSquare, Mic } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
@@ -24,14 +24,19 @@ export default function Navbar() {
       icon: <Upload className="h-5 w-5" />,
     },
     {
+      name: "Chatbot",
+      path: "/chat",
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+    {
+      name: "Voice Assistant",
+      path: "/voice-assistant",
+      icon: <Mic className="h-5 w-5" />,
+    },
+    {
       name: "History",
       path: "/history",
       icon: <History className="h-5 w-5" />,
-    },
-    {
-      name: "Settings",
-      path: "/settings",
-      icon: <Settings className="h-5 w-5" />,
     },
   ]
 
