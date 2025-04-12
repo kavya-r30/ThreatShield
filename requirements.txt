@@ -53,3 +53,4 @@ yara-python==4.5.1
 zstandard==0.23.0
 pefile
 joblib
+reportlab
