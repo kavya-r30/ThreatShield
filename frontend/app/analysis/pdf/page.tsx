@@ -19,6 +19,7 @@ export default function PDFAnalysisPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<GeneralAnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  
 
   useEffect(() => {
     try {
@@ -36,6 +37,94 @@ export default function PDFAnalysisPage() {
       setLoading(false)
     }
   }, [encodedData])
+
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const handleDownloadReport = async () => {
+    try {
+      if (!data) {
+        console.error("No data available for report generation");
+        alert("No data available for report generation");
+        return;
+      }
+      
+      setIsGeneratingReport(true);
+      
+      // Create a filename based on the file being analyzed
+      const filename = `${data.file_name || 'analysis'}-security-report.pdf`;
+      
+      // Get fileType from data object if it exists, otherwise use a default value
+      const fileType = data.fileType || data.file_type || "unknown";
+      
+      // Get report ID from data if available, otherwise use a timestamp as fallback
+      const reportId = data.id || data.reportId || `report-${Date.now()}`;
+      
+      // Prepare payload for API - ensure we're sending what the API expects
+      const payload = {
+        fileData: data,
+        fileType: fileType,
+        reportId: reportId
+      };
+      
+      // Make the request to generate the PDF
+      const response = await fetch("http://localhost:5000/api/generate-report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        let errorMessage = `Server responded with status ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          console.error("Could not parse error response as JSON:", e);
+        }
+        throw new Error(errorMessage);
+      }
+      
+      // Check content type to ensure we received a PDF
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType?.includes('application/json')) {
+        // If we got JSON instead of a PDF, it's probably an error
+        const jsonData = await response.json();
+        throw new Error(jsonData.error || 'Server returned JSON instead of PDF');
+      }
+      
+      // Get the response as a Blob (PDF file)
+      const blob = await response.blob();
+      
+      if (blob.size === 0) {
+        throw new Error("Received empty PDF file");
+      }
+      
+      // Create a download link and trigger the browser's save dialog
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error generating report:", errorMessage);
+      alert(`An error occurred while generating the report: ${errorMessage}`);
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }
+
 
   if (loading) {
     return (
@@ -163,9 +252,24 @@ export default function PDFAnalysisPage() {
               <FileIcon className="h-3.5 w-3.5" />
               <span>PDF File</span>
             </Badge>
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Download className="h-4 w-4" />
-              <span>Report</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-1.5" 
+              onClick={handleDownloadReport}
+              disabled={isGeneratingReport}
+            >
+              {isGeneratingReport ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  <span>Report</span>
+                </>
+              )}
             </Button>
           </div>
         </div>

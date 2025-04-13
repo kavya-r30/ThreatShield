@@ -11,6 +11,8 @@ from model import analyze_file_for_malware
 from pe_model import predict_malware_with_analysis
 from pdf_model import analyze_pdf_file
 from chat import MalwareAnalysisChatbot, JSONReportChatbot
+import traceback
+from gen_report import generate_pdf_report
 
 app = Flask(__name__)
 CORS(app, origins="*")
@@ -433,9 +435,55 @@ def ask_chatbot():
             'error_type': error_type,
             'status': 'failure'
         }), 500
+    
+@app.route('/api/generate-report', methods=['POST'])
+def generate_report():
+    try:
+        # Get JSON data from request
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        # Validate JSON format
+        if not isinstance(data, dict):
+            return jsonify({"error": "Invalid JSON format, expected a dictionary"}), 400
+            
+        # Create temporary PDF file
+        temp_dir = tempfile.mkdtemp()
+        output_path = os.path.join(temp_dir, 'report.pdf')
+        
+        # Generate report
+        print("Generating security report PDF...")
+        
+        # Ensure the generate_pdf_report function exists
+        # If it doesn't, you'll need to implement it
+        pdf_path = generate_pdf_report(data, output_path)
+        
+        # Set proper headers for file download
+        response = send_file(
+            pdf_path,
+            as_attachment=True,
+            download_name=f"{data.get('file_name', 'analysis')}-security-report.pdf",
+            mimetype='application/pdf'
+        )
+        
+        # Add headers to prevent caching, ensuring fresh download each time
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        response.headers["Content-Disposition"] = f"attachment; filename={data.get('file_name', 'analysis')}-security-report.pdf"
+        
+        return response
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        print(f"Error generating report: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    
 
 if __name__ == '__main__':
     if not os.environ.get('GROQ_API_KEY'):
         print("Warning: GROQ_API_KEY environment variable not set!")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(port=5000, debug=True)
