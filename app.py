@@ -3,6 +3,7 @@ import io
 import sys
 import json
 import tempfile
+import traceback
 from flask import Flask, request, jsonify
 from flask import send_file
 from flask_cors import CORS
@@ -11,6 +12,8 @@ from model import analyze_file_for_malware
 from pe_model import predict_malware_with_analysis
 from pdf_model import analyze_pdf_file
 from chat import MalwareAnalysisChatbot, JSONReportChatbot
+from report import generate_pdf_report
+from dy import dy_file
 
 app = Flask(__name__)
 CORS(app, origins="*")
@@ -433,6 +436,93 @@ def ask_chatbot():
             'error_type': error_type,
             'status': 'failure'
         }), 500
+    
+@app.route('/api/generate-report', methods=['POST'])
+def generate_report():
+    try:
+        # Get JSON data from request
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        # Validate JSON format
+        if not isinstance(data, dict):
+            return jsonify({"error": "Invalid JSON format, expected a dictionary"}), 400
+            
+        # Create temporary PDF file
+        temp_dir = tempfile.mkdtemp()
+        output_path = os.path.join(temp_dir, 'report.pdf')
+        
+        # Generate report
+        print("Generating security report PDF...")
+        
+        # Ensure the generate_pdf_report function exists
+        # If it doesn't, you'll need to implement it
+        pdf_path = generate_pdf_report(data, output_path)
+        
+        # Set proper headers for file download
+        response = send_file(
+            pdf_path,
+            as_attachment=True,
+            download_name=f"{data.get('file_name', 'analysis')}-security-report.pdf",
+            mimetype='application/pdf'
+        )
+        
+        # Add headers to prevent caching, ensuring fresh download each time
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        response.headers["Content-Disposition"] = f"attachment; filename={data.get('file_name', 'analysis')}-security-report.pdf"
+        
+        return response
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        print(f"Error generating report: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+
+@app.route('/api/analyze-dynamic', methods=['POST'])
+def analyze_route():
+    """
+    Process the uploaded file using VirusTotal API and return JSON results
+    
+    Returns:
+        JSON response with analysis results
+    """
+    # Check if file is present in the request
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part in the request'}), 400
+    
+    file = request.files['file']
+    
+    # Check if a file was selected
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    try:
+        filepath = os.path.join(os.path.join("temp_uploads", file.filename))
+        file.save(filepath)
+        
+        results = dy_file(
+            filepath,
+            "7393cd0b58277c7af0020bad0fe95d531ba723dfa2035b110f6a1922c21bd090"
+        )
+        
+        try:
+            os.remove(filepath)
+        except:
+            pass  # Ignore errors during cleanup
+        
+        # Return the JSON results
+        return jsonify(results)
+    
+    except Exception as e:
+        # Return error message
+        return jsonify({
+            'error': 'Analysis failed',
+            'message': str(e)
+        }), 500   
 
 if __name__ == '__main__':
     if not os.environ.get('GROQ_API_KEY'):
