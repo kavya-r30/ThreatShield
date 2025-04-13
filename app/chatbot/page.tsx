@@ -11,35 +11,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import type { ChatMessage } from "@/lib/types"
+import type { ChatMessage, FileType } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { analyzeReportWithAI } from "@/lib/api"
-
-// Define FileType enum
-enum FileType {
-  PE = "PE",
-  OFFICE = "OFFICE",
-  PDF = "PDF",
-  SCRIPT = "SCRIPT",
-  APK = "APK",
-}
-
-// Mock functions for API calls
-const uploadFileForAnalysis = async (file: File, fileType: FileType): Promise<any> => {
-  console.log(`Uploading file ${file.name} of type ${fileType} for analysis...`)
-  await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate network delay
-  return {
-    filename: file.name,
-    fileType: fileType,
-    analysisResult: `Mock analysis result for ${file.name} (${fileType})`,
-  }
-}
-
-const askAI = async (query: string): Promise<string> => {
-  console.log(`Asking AI: ${query}`)
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return `Mock AI response to: ${query}`
-}
+import { analyzeReportWithAI, askAI, uploadFileForAnalysis } from "@/lib/api"
 
 export default function ChatbotPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -206,7 +180,8 @@ export default function ChatbotPage() {
         }
       } else {
         // For text-only queries
-        response = await askAI(input)
+        const result = await askAI(input)
+        response = result.response
       }
 
       const assistantMessage: ChatMessage = {
@@ -250,7 +225,7 @@ export default function ChatbotPage() {
       return FileType.APK
     }
 
-    return FileType.PE // Default
+    return FileType.PE
   }
 
   return (

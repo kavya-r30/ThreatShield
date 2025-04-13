@@ -24,7 +24,6 @@ export default function OfficeAnalysisPage() {
   useEffect(() => {
     try {
       if (encodedData) {
-        // Decode and parse the data from the URL
         const decodedData = JSON.parse(decodeURIComponent(encodedData))
         setData(decodedData)
       } else {
@@ -37,6 +36,81 @@ export default function OfficeAnalysisPage() {
       setLoading(false)
     }
   }, [encodedData])
+
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const handleDownloadReport = async () => {
+    try {
+      if (!data) {
+        console.error("No data available for report generation");
+        alert("No data available for report generation");
+        return;
+      }
+      
+      setIsGeneratingReport(true);
+      
+      const filename = `${data.file_name || 'analysis'}-security-report.pdf`;    
+      const fileType = data.fileType || data.file_type || "unknown";
+      const reportId = data.id || data.reportId || `report-${Date.now()}`;
+      
+      const payload = {
+        fileData: data,
+        fileType: fileType,
+        reportId: reportId
+      };
+      
+      const response = await fetch("http://127.0.0.1:5000/api/generate-report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        let errorMessage = `Server responded with status ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          console.error("Could not parse error response as JSON:", e);
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType?.includes('application/json')) {
+        const jsonData = await response.json();
+        throw new Error(jsonData.error || 'Server returned JSON instead of PDF');
+      }
+      
+      const blob = await response.blob();
+      
+      if (blob.size === 0) {
+        throw new Error("Received empty PDF file");
+      }
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Error generating report:", errorMessage);
+      alert(`An error occurred while generating the report: ${errorMessage}`);
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -170,9 +244,24 @@ export default function OfficeAnalysisPage() {
               <FileSpreadsheet className="h-3.5 w-3.5" />
               <span>Office Document</span>
             </Badge>
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Download className="h-4 w-4" />
-              <span>Report</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-1.5" 
+              onClick={handleDownloadReport}
+              disabled={isGeneratingReport}
+            >
+              {isGeneratingReport ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  <span>Report</span>
+                </>
+              )}
             </Button>
           </div>
         </div>

@@ -33,7 +33,6 @@ export async function uploadFileForAnalysis(file: File, fileType: FileType): Pro
     }
 
     const result = await response.json()
-    console.log("API Response:", result)
 
     // Save the result to history
     saveToHistory(result, fileType)
@@ -47,9 +46,6 @@ export async function uploadFileForAnalysis(file: File, fileType: FileType): Pro
 
 /**
  * Fetches analysis results for a specific file
- * This is a placeholder since the backend doesn't have a /results endpoint
- * In a real implementation, you would store the analysis result in a database
- * and fetch it using an ID
  */
 export async function fetchAnalysisResult(
   id: string,
@@ -156,6 +152,7 @@ export async function askAI(question: string): Promise<string> {
   }
 }
 
+
 /**
  * Analyzes a JSON report using the AI assistant
  */
@@ -181,6 +178,79 @@ export async function analyzeReportWithAI(reportData: any): Promise<any> {
 }
 
 /**
+ * Generates a PDF report from analysis data
+ */
+export async function generatePDFReport(analysisData: any): Promise<Blob> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/generate-report`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(analysisData),
+    })
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+
+    return await response.blob()
+  } catch (error) {
+    console.error("Error generating PDF report:", error)
+    throw error
+  }
+}
+
+/**
+ * Submits a file for dynamic analysis
+ * @param file The file to analyze
+ * @param apiKey Optional API key for VirusTotal
+ * @returns The analysis result
+ */
+export async function submitDynamicAnalysis(file: File, apiKey?: string): Promise<any> {
+  try {
+    const formData = new FormData()
+    formData.append("file", file)
+    if (apiKey) {
+      formData.append("api_key", apiKey)
+    }
+
+    const response = await fetch("/api/dynamic-analysis/scan", {
+      method: "POST",
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+      throw new Error(errorData.error || `API error: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error("Error submitting file for dynamic analysis:", error)
+    throw error
+  }
+}
+
+/**
+ * Fetches the results of a dynamic analysis
+ */
+export async function fetchDynamicAnalysisResults(analysisId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/dynamic-analysis/results/${analysisId}`)
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error("Error fetching dynamic analysis results:", error)
+    throw error
+  }
+}
+
+/**
  * Generates a chat response from the AI
  */
 export async function generateChatResponse(message: string, file?: File | null): Promise<string> {
@@ -192,7 +262,7 @@ export async function generateChatResponse(message: string, file?: File | null):
       formData.append("file", file)
     }
 
-    const response = await fetch(`${API_BASE_URL}/chat`, {
+    const response = await fetch(`${API_BASE_URL}/chatbot`, {
       method: "POST",
       body: formData,
     })

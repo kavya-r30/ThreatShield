@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ShieldAlert, Menu, BarChart2, History, Upload, Settings, MessageSquare, Mic } from "lucide-react"
+import { ShieldAlert, Menu, BarChart2, History, Upload, Settings, MessageSquare, Mic, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
@@ -32,6 +32,11 @@ export default function Navbar() {
       name: "Voice Assistant",
       path: "/voice-assistant",
       icon: <Mic className="h-5 w-5" />,
+    },
+    {
+      name: "Dynamic Analysis",
+      path: "/dynamic-analysis",
+      icon: <Activity className="h-5 w-5" />,
     },
     {
       name: "History",
@@ -65,9 +70,6 @@ export default function Navbar() {
               {route.name}
             </Link>
           ))}
-          <Button variant="default" size="sm" className="shadow-sm">
-            Sign In
-          </Button>
         </nav>
 
         {/* Mobile Navigation */}
@@ -96,7 +98,6 @@ export default function Navbar() {
                   {route.name}
                 </Link>
               ))}
-              <Button className="mt-4">Sign In</Button>
             </div>
           </SheetContent>
         </Sheet>

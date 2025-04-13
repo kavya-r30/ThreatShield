@@ -163,7 +163,7 @@ export default function VoiceAssistantPage() {
       utteranceRef.current.onstart = () => setIsSpeaking(true)
       utteranceRef.current.onend = () => setIsSpeaking(false)
       utteranceRef.current.onerror = (event) => {
-        console.error("Speech synthesis error", event)
+        // console.error("Speech synthesis error", event)
         setIsSpeaking(false)
       }
 
