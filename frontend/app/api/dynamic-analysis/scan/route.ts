@@ -10,14 +10,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    // Create a new FormData to send to the backend API
     const apiFormData = new FormData()
     apiFormData.append("file", file)
 
-    // Get the API base URL from environment variables
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api"
 
-    // Call the backend API to analyze the file
     const response = await fetch(`${apiBaseUrl}/analyze-dynamic`, {
       method: "POST",
       body: apiFormData,
@@ -28,10 +25,8 @@ export async function POST(req: Request) {
       throw new Error(errorData.error || `API error: ${response.status}`)
     }
 
-    // Get the analysis results
     const analysisResults = await response.json()
 
-    // Process the results to make them more usable in the frontend
     const processedResults = processAnalysisResults(analysisResults)
 
     return NextResponse.json(processedResults)
@@ -45,13 +40,11 @@ export async function POST(req: Request) {
 }
 
 function processAnalysisResults(results: any) {
-  // Extract the most important information from the analysis results
   const fileInfo = results.file_info || {}
   const dynamicAnalysis = results.dynamic_analysis?.data || []
   const staticAnalysis = results.static_analysis?.data?.attributes || {}
   const report = results.report || ""
 
-  // Create a summary of the analysis
   const summary = {
     file_info: {
       name: fileInfo.name || "Unknown",
