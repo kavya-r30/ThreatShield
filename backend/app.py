@@ -14,6 +14,7 @@ from pe_model import predict_malware_with_analysis
 from pdf_model import analyze_pdf_file
 from chat import MalwareAnalysisChatbot, JSONReportChatbot
 from report import generate_pdf_report
+from hreport import generate_human_readable_report
 from dy import dy_file
 
 app = Flask(__name__)
@@ -488,7 +489,17 @@ def analyze_route():
             'message': str(e)
         }), 500   
 
-logging.getLogger("api.groq").setLevel(logging.WARNING)
+@app.route('/api/human-report', methods=['POST'])
+def human_readable_report():
+    try:
+        analysis_json = request.get_json()
+        if not analysis_json:
+            return jsonify({"error": "No JSON data provided"}), 400
+
+        report = generate_human_readable_report(analysis_json)
+        return jsonify({"report": report})
+    except Exception as e:
+        return jsonify({"error": "Failed to generate report", "details": str(e)}), 500
 
 if __name__ == '__main__':
     if not os.environ.get('API_KEY_MODEL'):

@@ -31,7 +31,7 @@ api_key = os.getenv("API_KEY_MODEL")
 if not api_key:
     raise ValueError("API_KEY_MODEL not set in the environment or .env file")
 
-model = ChatGroq(model="qwen-2.5-32b", api_key=api_key)
+model = ChatGroq(model="llama-3.3-70b-versatile", api_key=api_key)
 
 YARA_RULES = r"""
 rule SuspiciousBase64
