@@ -13,7 +13,9 @@ const inter = Inter({
 export const metadata = {
   title: "ThreatShield - Advanced Malware Detection",
   description: "Scan files for potential threats and get detailed analysis in seconds.",
-  generator: "v0.dev",
+  icons: {
+    icon: "/favicon.svg"
+  }
 }
 
 export default function RootLayout({
