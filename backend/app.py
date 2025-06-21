@@ -504,5 +504,6 @@ def human_readable_report():
 if __name__ == '__main__':
     if not os.environ.get('API_KEY_MODEL'):
         print("Warning: environment variable not set!")
-    
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

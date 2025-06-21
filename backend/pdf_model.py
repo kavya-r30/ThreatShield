@@ -7,8 +7,6 @@ from sklearn.preprocessing import StandardScaler
 import subprocess
 import tempfile
 import re
-import tkinter as tk
-from tkinter import filedialog
 import json
 from datetime import datetime
 
@@ -292,15 +290,8 @@ def generate_json_report(pdf_path, prediction, probability, features):
 
 def analyze_pdf_file(pdf_path=None, output_json=False, json_output_path=None):
     if pdf_path is None or not os.path.exists(pdf_path):
-        root = tk.Tk()
-        root.withdraw() 
-        pdf_path = filedialog.askopenfilename(
-            title="Select PDF File to Analyze",
-            filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
-        )
-        if not pdf_path:  
-            print("No file selected. Exiting.")
-            return None
+        print("Error: PDF path not provided or file does not exist.")
+        return None
     
     print(f"Analyzing PDF file: {pdf_path}")
     
