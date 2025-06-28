@@ -1,4 +1,4 @@
-# ThreatShield: AI-Powered Malware Analysis Platform
+# ThreatShield: AI-Powered Malware Analysis Platform 
 
 **ThreatShield** is a robust and extensible malware analysis platform designed for security professionals, malware researchers, and system administrators. It combines **static** and **dynamic analysis techniques** with **machine learning** to detect, analyze, and report malicious behavior across a wide range of file formats.
 
