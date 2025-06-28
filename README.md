@@ -59,6 +59,17 @@ ThreatShield supports hands-free interaction through voice commands, ideal for a
 
 Analysis results are compiled into structured reports, featuring all results that can be exported as professional PDF reports for documentation, audits, or sharing with stakeholders.
 
+### 8. Command-Line Interface (CLI) Tool
+
+ThreatShield includes a powerful CLI tool for streamlined malware analysis directly from the terminal. Key commands include:
+- `malware-detect <filename>`: Scans a specified file for malware and outputs a detailed report in the terminal.
+- `malware-detect`: Launches a user-friendly UI for interactive malware analysis.
+- `malware-detect --threatshield`: Opens the ThreatShield web interface in the default browser for full platform access.
+
+## To use the CLI tool
+- Download the .exe file from [here](https://drive.google.com/file/d/1RAVTcn4QLDRnRPI7MSc9wbQPDIkiEWzQ/view?usp=sharing)
+- Place the Downloaded exe file in a desired Folder.
+- Add the Path of the Folder to the System Environment Variables and then the CLI tool is good to go.
 ---
 
 ## Tech Stack
@@ -75,17 +86,26 @@ Analysis results are compiled into structured reports, featuring all results tha
 ```
 threatshield/
 ├── backend/
-│ ├── app.py
-│ ├── model.py
-│ ├── chat.py
-│ ├── report.py
-│ ├── pdf_models/
-│ └── ...
+│   ├── app.py
+│   ├── model.py
+│   ├── chat.py
+│   ├── report.py
+│   ├── pdf_models/
+│   └── ...
 │
 ├── frontend/
-│ ├── app/
-│ ├── components/
-│ ├── lib/
-│ └── public/
+│   ├── app/
+│   ├── components/
+│   ├── lib/
+│   └── public/
+│
+├── cli_tool/
+│   ├── malware_detector/
+│   │   ├── __init__.py
+│   │   ├── cli.py
+│   │   ├── malware_detector.py
+│   │   └── ui.py
+│   ├── setup.py
+│   └── README.md
 ```
 
