@@ -67,7 +67,7 @@ ThreatShield includes a powerful CLI tool for streamlined malware analysis direc
 - `malware-detect --threatshield`: Opens the ThreatShield web interface in the default browser for full platform access.
 
 ## To use the CLI tool
-- Download the .exe file from [here](https://drive.google.com/file/d/1RAVTcn4QLDRnRPI7MSc9wbQPDIkiEWzQ/view?usp=sharing)
+- Download the .exe file from [here](https://drive.google.com/file/d/19X-Iz7E6sxMzCKIPbz3DusTfU6CbPqol/view?usp=sharing) 
 - Place the Downloaded exe file in a desired Folder.
 - Add the Path of the Folder to the System Environment Variables and then the CLI tool is good to go.
 ---
